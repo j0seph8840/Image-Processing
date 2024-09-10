@@ -10,7 +10,6 @@ def main():
 
     hsv_method(images)
 
-
 def rgb_method(images):
     for image in images:
 
