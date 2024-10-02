@@ -3,92 +3,130 @@ import matplotlib.pyplot as plt
 import glob
 import numpy as np
 
-# Load images
-path = glob.glob("Fall 2023/ImageProcessing/Project 1/ImageSet1/*.JPG")
-images = [cv2.imread(file) for file in path]
+def main():
+    # Load images
+    path = glob.glob(r"Project 1\ImageSet1\*JPG")
+    images = [cv2.imread(file) for file in path]
 
-for image in images:
+    hsv_method(images)
 
-### Choose what format you want
+def rgb_method(images):
+    for image in images:
 
-    # Convert to RGB
-    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    # Split the channels
-    r, g, b = cv2.split(rgb)
-    # If red, green, and blue all have the same value then we got a gray pixel
-    gray_pixels = np.sum((r == g) & (g == b))
-    print("gray pixels:", gray_pixels)
-    total_pixels = image.shape[0] * image.shape[1]
+        # Convert to RGB
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # Split the channels
+        r, g, b = cv2.split(rgb)
+        # If red, green, and blue all have the same value then we got a gray pixel
+        gray_pixels = np.sum((r == g) & (g == b))
+        print("gray pixels:", gray_pixels)
+        total_pixels = image.shape[0] * image.shape[1]
 
-    # # Convert to HSV
-    # hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    # # Split the channels
-    # h, s, v = cv2.split(hsv)
-    # # If hue and saturation are both 0 then we got a gray pixel
-    # gray_pixels = np.sum((h == 0) & (s == 0))
-    # total_pixels = image.shape[0] * hsv.shape[1]
+# Determine whether day or night and display image
 
-### Determine whether day or night and display image
+        # Check if there are more gray pixels than anything else
+        is_night = gray_pixels > total_pixels * .06495
 
-    # Check if there are more gray pixels than anything else
-    is_night = gray_pixels > total_pixels * .06495
+        if is_night:
+            title = 'Night!'
+        else:
+            title = 'Day!'  
 
-    if is_night:
-        title = 'Night!'
-    else:
-        title = 'Day!'  
+        plt.figure(figsize=(12,8))
 
-    # plt.figure(figsize=(12,8))
-    print("title", title)
-    # plt.imshow(image)
-    
+        # Convert to RGB
+        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        plt.title(title)
+        plt.show(rgb_image)
+
+# Plotting histogram. Value x Frequency
+
+        # # Create histograms for each channel
+        # plt.figure(figsize=(12,8))
+
+        # # RGB
+        # # Plot histogram for Red
+        # plt.subplot(3, 1, 1)
+        # plt.hist(r.ravel(), bins=256, range=[0, 255], color='red', alpha=0.7)
+        # plt.title('Red Histogram')
+        # plt.xlabel('Red value')
+        # plt.ylabel('Frequency')
+        # # Plot histogram for Green
+        # plt.subplot(3, 1, 2)
+        # plt.hist(g.ravel(), bins=256, range=[0, 255], color='green', alpha=0.7)
+        # plt.title('Green Histogram')
+        # plt.xlabel('Green value')
+        # plt.ylabel('Frequency')
+        # # Plot histogram for Blue
+        # plt.subplot(3, 1, 3)
+        # plt.hist(b.ravel(), bins=256, range=[0, 255], color='blue', alpha=0.7)
+        # plt.title('Blue Histogram')
+        # plt.xlabel('Blue value)')
+        # plt.ylabel('Frequency')
+
+        # # Adjust the layout and display
+        # plt.tight_layout()
+        # plt.show()
 
 
-### Plotting histograms
+def hsv_method(images):
+    for image in images:
 
-    # Create histograms for each channel
-    # plt.figure(figsize=(12,8))
+        # Convert to HSV
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        # Split the channels
+        h, s, v = cv2.split(hsv)
+        # If hue and saturation are both 0 then we got a gray pixel
+        gray_pixels = np.sum((h == 0) & (s == 0))
+        total_pixels = image.shape[0] * hsv.shape[1]
 
-    # # RGB
-    # # Plot histogram for Red
-    # plt.subplot(3, 1, 1)
-    # plt.hist(r.ravel(), bins=256, range=[0, 255], color='red', alpha=0.7)
-    # plt.title('Red Histogram')
-    # plt.xlabel('Red value')
-    # plt.ylabel('Frequency')
-    # # Plot histogram for Green
-    # plt.subplot(3, 1, 2)
-    # plt.hist(g.ravel(), bins=256, range=[0, 255], color='green', alpha=0.7)
-    # plt.title('Green Histogram')
-    # plt.xlabel('Green value')
-    # plt.ylabel('Frequency')
-    # # Plot histogram for Blue
-    # plt.subplot(3, 1, 3)
-    # plt.hist(b.ravel(), bins=256, range=[0, 255], color='blue', alpha=0.7)
-    # plt.title('Blue Histogram')
-    # plt.xlabel('Blue value)')
-    # plt.ylabel('Frequency')
+# Determine whether day or night and display image
 
-    # HSV
-    # # Plot histogram for Hue
-    # plt.subplot(3, 1, 1)
-    # plt.hist(r.ravel(), bins=256, range=[0, 180], color='red', alpha=0.7)
-    # plt.title('Hue Histogram')
-    # plt.xlabel('Hue value')
-    # plt.ylabel('Frequency')
-    # # Plot histogram for Saturation
-    # plt.subplot(3, 1, 2)
-    # plt.hist(s.ravel(), bins=256, range=[0, 256], color='green', alpha=0.7)
-    # plt.title('Saturation Histogram')
-    # plt.xlabel('Saturation value')
-    # plt.ylabel('Frequency')
-    # # Plot histogram for Value
-    # plt.subplot(3, 1, 3)
-    # plt.hist(v.ravel(), bins=256, range=[0, 256], color='blue', alpha=0.7)
-    # plt.title('Value Histogram')
-    # plt.xlabel('Value (Brightness)')
-    # plt.ylabel('Frequency')
+        # Check if there are more gray pixels than anything else
+        is_night = gray_pixels > total_pixels * .06495
 
-    # Adjust the layout and display
-    # plt.tight_layout()
-    # plt.show()
+        if is_night:
+            title = 'Night!'
+        else:
+            title = 'Day!'  
+
+        plt.figure(figsize=(12,8))
+
+        # Convert to RGB
+        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        plt.title(title)
+        plt.imshow(rgb_image)
+        plt.show()
+
+# Plotting histogram. Value x Frequency
+
+        # # Create histograms for each channel
+        # plt.figure(figsize=(12,8))
+
+        # # HSV
+        # # Plot histogram for Hue
+        # plt.subplot(3, 1, 1)
+        # plt.hist(h.ravel(), bins=256, range=[0, 256], color='red', alpha=0.7)
+        # plt.title('Hue Histogram')
+        # plt.xlabel('Hue value')
+        # plt.ylabel('Frequency')
+        # # Plot histogram for Saturation
+        # plt.subplot(3, 1, 2)
+        # plt.hist(s.ravel(), bins=256, range=[0, 256], color='green', alpha=0.7)
+        # plt.title('Saturation Histogram')
+        # plt.xlabel('Saturation value')
+        # plt.ylabel('Frequency')
+        # # Plot histogram for Value
+        # plt.subplot(3, 1, 3)
+        # plt.hist(v.ravel(), bins=256, range=[0, 256], color='blue', alpha=0.7)
+        # plt.title('Value Histogram')
+        # plt.xlabel('Value (Brightness)')
+        # plt.ylabel('Frequency')
+
+    # # Adjust the layout and display
+    #     plt.tight_layout()
+    #     plt.show()
+
+main()
