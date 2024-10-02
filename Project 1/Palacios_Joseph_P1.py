@@ -3,10 +3,15 @@ import matplotlib.pyplot as plt
 import glob
 import numpy as np
 
+
 def main():
     # Load images
-    path = glob.glob(r"Project 1\ImageSet1\*JPG")
-    images = [cv2.imread(file) for file in path]
+
+    path = input("Enter the path to the image set: ")
+
+    directory = glob.glob(f"{path}/*.JPG")
+
+    images = [cv2.imread(file) for file in directory]
 
     hsv_method(images)
 
@@ -19,7 +24,7 @@ def rgb_method(images):
         r, g, b = cv2.split(rgb)
         # If red, green, and blue all have the same value then we got a gray pixel
         gray_pixels = np.sum((r == g) & (g == b))
-        print("gray pixels:", gray_pixels)
+
         total_pixels = image.shape[0] * image.shape[1]
 
 # Determine whether day or night and display image
@@ -34,11 +39,9 @@ def rgb_method(images):
 
         plt.figure(figsize=(12,8))
 
-        # Convert to RGB
-        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        plt.title(title)
-        plt.show(rgb_image)
+        cv2.imshow(title, image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 # Plotting histogram. Value x Frequency
 
@@ -93,12 +96,9 @@ def hsv_method(images):
 
         plt.figure(figsize=(12,8))
 
-        # Convert to RGB
-        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        plt.title(title)
-        plt.imshow(rgb_image)
-        plt.show()
+        cv2.imshow(title, image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 # Plotting histogram. Value x Frequency
 
