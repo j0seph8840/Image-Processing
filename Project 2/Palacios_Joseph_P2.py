@@ -1,106 +1,130 @@
-import cv2
-import matplotlib.pyplot as plt
-import glob
 import numpy as np
-import os
+import matplotlib.pyplot as plt
+import cv2
 
+# Function to rotate the image without cropping
+def rotate_image(image, angle):
+    # Get image size
+    (h, w) = image.shape[:2]
+
+    # Calculate the center of the image
+    center = (w / 2, h / 2)
+
+    # Calculate the rotation matrix
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+
+    # Compute the sine and cosine of the rotation angle
+    abs_cos = abs(M[0, 0])
+    abs_sin = abs(M[0, 1])
+
+    # Compute the new bounding dimensions of the image
+    new_w = int(h * abs_sin + w * abs_cos)
+    new_h = int(h * abs_cos + w * abs_sin)
+
+    # Adjust the rotation matrix to account for the new dimensions
+    M[0, 2] += (new_w / 2) - center[0]
+    M[1, 2] += (new_h / 2) - center[1]
+
+    # Perform the rotation
+    rotated = cv2.warpAffine(image, M, (new_w, new_h), borderMode=cv2.BORDER_REPLICATE)
+
+    return rotated
+
+# Function to crop the image to the bounding box of the edges
+def crop_image_to_edges(image, edge_mask):
+
+    crop_threshold = np.max(edge_mask) * 0.5
+    crop_edge_mask = edge_mask > crop_threshold
+
+    # Find the coordinates of the non-zero values in the edge mask
+    coords = np.column_stack(np.where(crop_edge_mask))
+
+    # Get the bounding box of the edges
+    x_min, y_min = np.min(coords, axis=0)
+    x_max, y_max = np.max(coords, axis=0)
+
+    # Crop the image based on the bounding box
+    cropped_image = image[x_min:x_max, y_min:y_max]
+
+    return cropped_image
+
+# Main function to load, process, rotate, and crop the image
 def main():
-    # name = input("Enter the name of the image: ")
-    # image_path = f"{name}.tif"
-    image = cv2.imread("Testimage3.tif")
+    # Ask user for image without the file extension
+    name = input("Enter the name of the image: ")
+    image_path = f"{name}.tif"
 
-    align_image(image)
+    # Load the image in grayscale
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-def align_image(image):
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Apply Gaussian blur to the grayscale image
+    gaussian_blur = np.array([[0, 0, 1, 2, 1, 0, 0],
+                              [0, 3, 13, 22, 13, 3, 0],
+                              [1, 13, 59, 97, 59, 13, 1],
+                              [2, 22, 97, 159, 97, 22, 2],
+                              [1, 13, 59, 97, 59, 13, 1],
+                              [0, 3, 13, 22, 13, 3, 0],
+                              [0, 0, 1, 2, 1, 0, 0]], dtype=np.float32) / 1003
 
-    # Binarize the image
-    _, binary_image = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+    img_blurred = cv2.filter2D(img, cv2.CV_32F, gaussian_blur)
 
-    # Average blur kernel 3x3
-    # blur_kernel = np.ones((5, 5)) / 25
+    # Sobel kernels
+    gx = np.array([[-1, -2, -1],
+                   [0, 0, 0],
+                   [1, 2, 1]])
+    gy = np.array([[-1, 0, 1],
+                   [-2, 0, 2],
+                   [-1, 0, 1]])
 
-    #gausian blue 5x5 kernel
-    blur_kernel = np.array([[1, 4, 6, 4, 1],
-                            [4, 16, 24, 16, 4],
-                            [6, 24, 36, 24, 6],
-                            [4, 16, 24, 16, 4],
-                            [1, 4, 6, 4, 1]]) / 256
-    
-    # Apply blurring
-    blurred = cv2.filter2D(binary_image, cv2.CV_32F, blur_kernel)
+    # Apply Sobel filters to the blurred image
+    sobel_x = cv2.filter2D(img_blurred, cv2.CV_32F, gx)
+    sobel_y = cv2.filter2D(img_blurred, cv2.CV_32F, gy)
 
-    # Apply Sobel filters
-    sobel_x = np.array([[-1, 0, 1],
-                        [-2, 0, 2],
-                        [-1, 0, 1]])
-    sobel_y = np.array([[-1, -2, -1],
-                        [0, 0, 0],
-                        [1, 2, 1]])
+    # Calculate gradient magnitude and angle
+    gradient_magnitude = np.sqrt(sobel_x**2 + sobel_y**2)
 
-    # Apply convolution with the Sobel X and Y filters
-    grad_x = cv2.filter2D(blurred, cv2.CV_32F, sobel_x)
-    grad_y = cv2.filter2D(blurred, cv2.CV_32F, sobel_y)
+    # Convert radians to degrees and adjust angle range to [0, 180)
+    gradient_angle = np.arctan2(sobel_y, sobel_x) * 180 / np.pi % 180
 
-    # Compute the magnitude of the gradient
-    # magnitude = np.sqrt(grad_x ** 2 + grad_y ** 2)
-    magnitude = np.abs(grad_x) + np.abs(grad_y)
+    # Threshold the gradient magnitude to keep significant edges
+    mag_threshold = np.max(gradient_magnitude) * 0.3  # Adjust this value as needed
+    edge_mask = gradient_magnitude > mag_threshold
 
-    # Compute the angle of the gradient
-    angle_radians = np.arctan2(grad_y, grad_x)
+    # Get edge gradient angles
+    edge_angles = gradient_angle[edge_mask]
 
-    # Convert radians to degrees
-    angle_degrees = np.degrees(angle_radians)
-    
-    # Create histogram of angles, ignore 0-degree pixels
-    hist, bins = np.histogram(angle_radians, bins=180, range=(1, 180))
-    
-    # Find the dominant angle, finds the degree with the highest frequency
-    dominant_angle = bins[np.argmax(hist)]
-    print(f"Dominant angle is: {dominant_angle}")
+    # Create histogram of edge angles
+    hist, bins = np.histogram(edge_angles, bins=180, range=(0, 180))
 
-    # Rotate the image based on the dominant angle
-    angle_to_rotate = 90 - dominant_angle
-    rows, cols = image.shape[:2]
-    rotation_matrix = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle_to_rotate, 1)
-    rotated_image = cv2.warpAffine(image, rotation_matrix, (cols, rows))
+    # Find the dominant edge angle
+    dominant_angle_index = np.argmax(hist)
+    dominant_angle = (bins[dominant_angle_index])
+    # print(f"Dominant edge angle: {dominant_angle} degrees")
 
-    # Display original image
-    plt.figure(figsize=(12, 8))
-    plt.imshow(image)
-    plt.title('Original Image')
+    # Since gradient_angle corresponds to edge orientation, calculate rotation angle directly
+    rotation_angle = 90 - dominant_angle
+    # print(f"Rotation angle: {rotation_angle} degrees")
 
-    # Display the binary image
-    plt.figure(figsize=(12, 8))
-    plt.imshow(binary_image)
-    plt.title('Binary Image')
+    # Check if the rotation angle is negative and adjust it
+    if rotation_angle < 0:
+        rotation_angle += 180
 
-    # Display the blurred image
-    plt.figure(figsize=(12, 8))
-    plt.imshow(blurred, cmap='gray')
-    plt.title('Blurred Image')
-    
-    # Display magnitude of the gradient
-    plt.figure(figsize=(12, 8))
-    plt.imshow(magnitude, cmap='gray')
-    plt.title('Magnitude of the Gradient')
+    # Rotate the image
+    rotated_img = rotate_image(img, rotation_angle)
 
-    # Display angle of the gradient
-    plt.figure(figsize=(12, 8))
-    plt.imshow(angle_degrees, cmap='gray')
-    plt.title('Angle of the Gradient')
+    # Sobel filters for the rotated image
+    crop_sobel_x = cv2.filter2D(rotated_img, cv2.CV_32F, gx)
+    crop_sobel_y = cv2.filter2D(rotated_img, cv2.CV_32F, gy)
 
-    # Display rotated image
-    plt.figure(figsize=(12, 8))
-    plt.imshow(rotated_image)
-    plt.title('Rotated Image')
+    # Rotated image magnitude and angle
+    crop_rotated_mag = np.sqrt(crop_sobel_x**2 + crop_sobel_y**2)
 
-    # Display the histogram of the angle
-    plt.figure(figsize=(12, 8))
-    plt.plot(hist)
-    plt.title('Histogram of Angles')
+    # Crop the image
+    cropped_img = crop_image_to_edges(rotated_img, crop_rotated_mag)
 
+    # Display the cropped image
+    plt.imshow(cropped_img, cmap='gray')
+    plt.title('Cropped Image')
     plt.show()
 
 if __name__ == "__main__":
