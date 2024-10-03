@@ -98,16 +98,17 @@ def main():
 
     # Find the dominant edge angle
     dominant_angle_index = np.argmax(hist)
-    dominant_angle = (bins[dominant_angle_index])
-    # print(f"Dominant edge angle: {dominant_angle} degrees")
+    dominant_angle = (bins[dominant_angle_index] + bins[dominant_angle_index + 1]) / 2
+    print(f"Dominant edge angle: {dominant_angle} degrees")
 
     # Since gradient_angle corresponds to edge orientation, calculate rotation angle directly
     rotation_angle = 90 - dominant_angle
-    # print(f"Rotation angle: {rotation_angle} degrees")
 
     # Check if the rotation angle is negative and adjust it
     if rotation_angle < 0:
         rotation_angle += 180
+
+    print(f"Rotation angle: {rotation_angle} degrees")
 
     # Rotate the image
     rotated_img = rotate_image(img, rotation_angle)
@@ -122,9 +123,16 @@ def main():
     # Crop the image
     cropped_img = crop_image_to_edges(rotated_img, crop_rotated_mag)
 
+    # Display the original image
+    plt.figure(figsize=(12, 6))
+    plt.subplot(121)
+    plt.imshow(img, cmap='gray')
+    plt.title('Original Image')
+
     # Display the cropped image
+    plt.subplot(122)
     plt.imshow(cropped_img, cmap='gray')
-    plt.title('Cropped Image')
+    plt.title('Rotated &Cropped Image')
     plt.show()
 
 if __name__ == "__main__":
