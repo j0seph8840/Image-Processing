@@ -94,7 +94,7 @@ def main():
     plt.imshow(combined_filter, cmap='gray')
 
     plt.figure(figsize=(12, 6))
-    plt.title('Filtered Image')
+    plt.title('Extracted Pattern')
     plt.imshow(filtered_image, cmap='gray')
 
     plt.show()
