@@ -44,7 +44,7 @@ def apply_lowpass_filter(image_fourier, cutoff, order):
         # Apply the Butterworth filter formula centered at each coordinate (peak)
         butterworth_filter = 1 / (1 + (distance / cutoff)**(2 * order))
         
-        # Multiply the filters to combine them at each coordinate (applying Butterworth filtering only at these peaks)
+        # Add the filters to combine them at each coordinate (applying Butterworth filtering only at these peaks)
         combined_filter += butterworth_filter
 
     # Normalize the combined filter to avoid overflow
@@ -75,22 +75,22 @@ def main():
     corrected_image_fourier_shifted = np.fft.fftshift(corrected_image_fourier)
 
     # Step 3: Apply the Butterworth lowpass filter in the Fourier domain
-    filtered_image, combined_filter = apply_lowpass_filter(corrected_image_fourier_shifted, cutoff=1, order=1)
+    filtered_image, combined_filter = apply_lowpass_filter(corrected_image_fourier_shifted, cutoff=2, order=1)
 
     # Step 4: Rotate the filtered image by 180 degrees
     filtered_image = np.rot90(filtered_image, 2)
 
     # Step 5: Visualize results
-    plt.figure(figsize=(12, 6))
-    plt.title('Original Image')
-    plt.imshow(img, cmap='gray')
+    # plt.figure(figsize=(12, 6))
+    # plt.title('Original Image')
+    # plt.imshow(img, cmap='gray')
 
     plt.figure(figsize=(12, 6))
     plt.title('Illumination Corrected Image')
     plt.imshow(corrected_image, cmap='gray')
     
     plt.figure(figsize=(12, 6))
-    plt.title('Combined Filter')
+    plt.title('Freq Domain Filter')
     plt.imshow(combined_filter, cmap='gray')
 
     plt.figure(figsize=(12, 6))
