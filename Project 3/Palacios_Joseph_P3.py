@@ -75,7 +75,7 @@ def main():
     corrected_image_fourier_shifted = np.fft.fftshift(corrected_image_fourier)
 
     # Step 3: Apply the Butterworth lowpass filter in the Fourier domain
-    filtered_image, combined_filter = apply_lowpass_filter(corrected_image_fourier_shifted, cutoff=2, order=1)
+    filtered_image, combined_filter = apply_lowpass_filter(corrected_image_fourier_shifted, cutoff=1, order=1)
 
     # Step 4: Rotate the filtered image by 180 degrees
     filtered_image = np.rot90(filtered_image, 2)
